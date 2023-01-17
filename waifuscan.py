@@ -57,11 +57,11 @@ for char_id in range(1, 140000):
                     age = "Unknown"
                 if source_title == None:
                     source_title = romaji
-                if image_url != None:
+                if image_url != None and not waifu_exists_by_anilist_id(anilist_id):
                     add_waifu(
                         name, gender, age, image_url, source_title, value, anilist_id
                     )
-                    print(f"Added {name} from {source_title}")
+                    print(f"Added {anilist_id}: {name} from {source_title}")
                 else:
                     pass
         case _:

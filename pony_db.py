@@ -7,8 +7,8 @@ sql_debug(True)
 
 class Waifu(db.Entity):
     waifu_id = PrimaryKey(int, auto=True)
-    anilist_id = Required(str)
-    full_name = Required(str, unique=True)
+    anilist_id = Required(int, unique=True)
+    full_name = Required(str)
     gender = Required(str)
     age = Required(str, default="Unknown")
     image_url = Required(str)
@@ -31,3 +31,8 @@ def add_waifu(name, gender, age, image, source, value, anilist_id):
         value=value,
         anilist_id=anilist_id,
     )
+
+
+@db_session
+def waifu_exists_by_anilist_id(ani_id):
+    return Waifu.exists(anilist_id=ani_id)
