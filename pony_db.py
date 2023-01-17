@@ -2,7 +2,12 @@ from pony.orm import *
 
 db = Database()
 db.bind(provider="sqlite", filename="db.sqlite", create_db=True)
-sql_debug(True)
+sql_debug(False)
+
+
+class User(db.Entity):
+    discord_id = PrimaryKey(int)
+    name = Required(str, unique=True)
 
 
 class Waifu(db.Entity):
@@ -36,3 +41,8 @@ def add_waifu(name, gender, age, image, source, value, anilist_id):
 @db_session
 def waifu_exists_by_anilist_id(ani_id):
     return Waifu.exists(anilist_id=ani_id)
+
+
+@db_session
+def get_random_waifu(waifu_id):
+    return Waifu.get(waifu_id=waifu_id)

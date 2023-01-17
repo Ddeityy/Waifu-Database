@@ -14,7 +14,7 @@ query = """
     gender
     age
     image {
-      medium
+      large
     }
     media {
       nodes {
@@ -33,8 +33,8 @@ query = """
 
 VALUE = {"MAIN": 500, "SUPPORTING": 250, "BACKGROUND": 100}
 
-for char_id in range(1, 140000):
-    sleep(1.5)
+for char_id in range(28022, 140000):
+    sleep(0.7)
     variables = {"id": char_id}
     response = requests.post(url, json={"query": query, "variables": variables})
     match response.status_code:
@@ -50,7 +50,7 @@ for char_id in range(1, 140000):
                 age = response["age"]
                 source_title = response["media"]["nodes"][0]["title"]["english"]
                 romaji = response["media"]["nodes"][0]["title"]["romaji"]
-                image_url = response["image"]["medium"]
+                image_url = response["image"]["large"]
                 role = response["media"]["edges"][0]["characterRole"]
                 value = VALUE[role]
                 if age == None:
@@ -58,7 +58,7 @@ for char_id in range(1, 140000):
                 if source_title == None:
                     source_title = romaji
                 if image_url != None and not waifu_exists_by_anilist_id(anilist_id):
-                    add_waifu(
+                    waifu = add_waifu(
                         name, gender, age, image_url, source_title, value, anilist_id
                     )
                     print(f"Added {anilist_id}: {name} from {source_title}")
