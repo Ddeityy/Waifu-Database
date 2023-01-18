@@ -1,7 +1,8 @@
 import requests
 from time import sleep
 from pprint import pprint
-from pony_db import *
+from models import *
+from model_logic import *
 
 url = "https://graphql.anilist.co"
 query = """
@@ -33,17 +34,19 @@ query = """
 
 VALUE = {"MAIN": 500, "SUPPORTING": 250, "BACKGROUND": 100}
 
-for char_id in range(65597, 140000):
+for char_id in range(95060, 140000):
     sleep(0.7)
     variables = {"id": char_id}
     response = requests.post(url, json={"query": query, "variables": variables})
     match response.status_code:
         case 404:
-            pass
+            print(f"{char_id} not found")
         case 200:
             response = response.json()["data"]["Character"]
             gender = response["gender"]
-            if gender == "Female":
+            if gender == "Male":
+                print(f"Skipped {response['id']}: - Male")
+            elif gender == "Female":
                 anilist_id = response["id"]
                 name = response["name"]["full"]
                 gender = response["gender"]

@@ -1,8 +1,8 @@
 import os
 import discord
-from discord.ext import commands
 import random
-from pony_db import get_random_waifu, Waifu
+from database.model_logic import *
+from database.models import *
 import dotenv
 
 dotenv.load_dotenv()
@@ -37,7 +37,7 @@ async def on_message(message):
     if message.author == client.user:
         return
     if message.content == "$waifu":
-        waifu = get_random_waifu(random.randint(1, 2230))
+        waifu = get_random_waifu(random.randint(1, 6284))
         embed = construct_message(waifu)
         await message.channel.send(embed=embed)
 
