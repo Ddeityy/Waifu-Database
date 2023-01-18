@@ -33,7 +33,7 @@ query = """
 
 VALUE = {"MAIN": 500, "SUPPORTING": 250, "BACKGROUND": 100}
 
-for char_id in range(28022, 140000):
+for char_id in range(65597, 140000):
     sleep(0.7)
     variables = {"id": char_id}
     response = requests.post(url, json={"query": query, "variables": variables})
