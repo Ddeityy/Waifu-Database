@@ -2,12 +2,13 @@
 
 Based on the database dump by Gwern on https://gwern.net/danbooru2021/
 
-## Change preview to original
+### Change preview to original
 
 ## More to filter:
 
 ### men
 
+- admiral\_(kancolle)
 - 1boy
 - androgynous
 - multiple_boys
@@ -30,6 +31,7 @@ Based on the database dump by Gwern on https://gwern.net/danbooru2021/
 - tentacles
 - bestiality
 - animal_focus
+- animal
 - injection
 - blood
 
