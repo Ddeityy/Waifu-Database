@@ -1,7 +1,7 @@
 from pony.orm import *
 
 db = Database()
-db.bind(provider="sqlite", filename="db.sqlite", create_db=True)
+db.bind(provider="sqlite", filename="db_danbooru_incomplete.sqlite", create_db=True)
 sql_debug(True)
 
 

@@ -1,13 +1,62 @@
-# Design ideas:
+# Waifu database
 
-- waifus have value based on the amount of porn they have on r34
+Based on the database dump by Gwern on https://gwern.net/danbooru2021/
 
-- players have money, can spend it on slave collars (pokeballs)
+## Change preview to original
 
-- when a player rolls he can choose to catch the waifu with collars
+## More to filter:
 
-# Features
+### men
 
-- view stable - get r34 pics of all owned waifus and show them in an embed
+- 1boy
+- androgynous
+- multiple_boys
+- multiple_others
+- 1,2,3,4,5,6+ others
+- body_switch
+- personality_switch
 
-- expand database with gacha, JRPGs, vtubers etc.
+### Many characters
+
+- everyone
+- multiple_views
+
+### Weird stuff
+
+- guro
+- scat
+- pee
+- baby
+- tentacles
+- bestiality
+- animal_focus
+- injection
+- blood
+
+### Unfinished art
+
+- parody
+- unfinished
+- sketch
+
+### Text
+
+- 4koma
+- comic
+- text_focus
+- speech_bubble
+- thought_bubble
+
+### Animated
+
+- animated
+- animated_gif
+- animated_png
+- hybrid_animation
+- non-repeating_animation
+- easytoon
+- looping_animation
+- flash
+- ugoira
+- video
+- live2d

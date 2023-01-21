@@ -1,29 +1,14 @@
 from pony.orm import *
 from .models import *
+from random import randint
 
 db = Database()
-db.bind(provider="sqlite", filename="db.sqlite", create_db=True)
+db.bind(provider="sqlite", filename="db_danbooru_incomplete.sqlite", create_db=True)
 sql_debug(False)
 
 
 @db_session
-def add_waifu(name, gender, age, image, source, value, anilist_id):
-    Waifu(
-        full_name=name,
-        gender=gender,
-        age=age,
-        image_url=image,
-        source_title=source,
-        value=value,
-        anilist_id=anilist_id,
-    )
-
-
-@db_session
-def waifu_exists_by_anilist_id(ani_id):
-    return Waifu.exists(anilist_id=ani_id)
-
-
-@db_session
-def get_random_waifu(waifu_id):
-    return Waifu.get(waifu_id=waifu_id)
+def get_random_waifu():
+    waifu_range = count(w for w in Waifu if w.post_count > 1)
+    waifu_id = randint(1, waifu_range)
+    return Waifu.get(id=waifu_id)
