@@ -1,6 +1,6 @@
 # Waifu database
 
-Based on the database dump by Gwern on https://gwern.net/danbooru2021/
+Based on the database dump by Gwern on https://gwern.net/Danbooru2021/
 
 ### Change preview to original
 
