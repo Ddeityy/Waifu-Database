@@ -244,6 +244,3 @@ def attach_post_count():
         else:
             print(f"Skipped: {counter}/{len(waifus)}")
             counter += 1
-
-
-trim()
