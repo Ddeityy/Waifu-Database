@@ -226,7 +226,7 @@ def parse_posts():
 
 
 def trim():
-    Waifu.objects.all().delete()
+    Waifu.objects.filter(post_count__lt=10).delete()
 
 
 def attach_post_count():
@@ -234,14 +234,15 @@ def attach_post_count():
     counter = 1
     for waifu in waifus:
         if waifu.post_count == None:
-            char = Character.objects.get(name=waifu.name)
-            waifu.post_count = char.post_count
-            waifu.save()
-            print(f"Added score: {counter}/{len(waifus)}")
-            counter += 1
+            if Character.objects.filter(name=waifu.name).exists():
+                char = Character.objects.get(name=waifu.name)
+                waifu.post_count = char.post_count
+                waifu.save()
+                print(f"Added score: {counter}/{len(waifus)}")
+                counter += 1
+            else:
+                print("Skipped: character not found")
+                counter += 1
         else:
             print(f"Skipped: {counter}/{len(waifus)}")
             counter += 1
-
-
-parse_posts()
