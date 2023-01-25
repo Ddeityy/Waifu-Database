@@ -58,8 +58,8 @@ def get_waifu_owner(waifu: Waifu):
 
 
 @sync_to_async
-def capture_waifu(waifu_id: int, user_discord_id):
-    if Waifu.objects.get(owner_id__discord_id=user_discord_id):
+def capture_waifu(waifu_id: int, user_discord_id: int):
+    if Waifu.objects.filter(owner_id__discord_id=user_discord_id, id=waifu_id).exists():
         return False
     else:
         waifu = Waifu.objects.get(id=waifu_id)

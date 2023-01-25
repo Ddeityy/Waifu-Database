@@ -18,7 +18,7 @@ bot = commands.Bot(command_prefix="$", intents=discord.Intents.all())
 
 
 @bot.command()
-async def capture(ctx, waifu_id):
+async def capture(ctx, waifu_id: int):
     user_id = ctx.author.id
     if await capture_waifu(waifu_id, user_id):
         await ctx.reply(f"Waifu successfully captured!")
@@ -35,7 +35,7 @@ async def waifu(ctx):
 
 
 @bot.command()
-@commands.is_owner()
+# @commands.is_owner()
 async def waifuid(ctx, id: int):
     waifu = await get_waifu_by_id(id)
     owner = await get_waifu_owner(waifu)
@@ -75,7 +75,7 @@ async def register(ctx):
 async def delete_user(ctx, id: int):
     try:
         await delete_user_db(id)
-        await ctx.reply(f"User {ctx.author} successfully deleted.")
+        await ctx.reply(f"User successfully deleted.")
     except NotOwner:
         await ctx.reply(f"No :)")
 
