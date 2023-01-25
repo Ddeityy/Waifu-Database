@@ -20,6 +20,7 @@ BAD_TAGS = [
     "6+boys",
     "futanari",
     "multiple_girls",
+    "multiple_others",
     "multiple_boys",
     "androgynous",
     "body_switch",
@@ -36,6 +37,9 @@ BAD_TAGS = [
     "injection",
     "blood",
     "parody",
+    "unfinished_art",
+    "unfinished",
+    "sketch",
     "4koma",
     "comic",
     "text_focus",
@@ -225,8 +229,8 @@ def parse_posts():
                             counter += 1
 
 
-def trim():
-    Waifu.objects.filter(post_count__lt=10).delete()
+def trim(number: int):
+    Waifu.objects.filter(post_count__lt=number).delete()
 
 
 def attach_post_count():
@@ -246,3 +250,66 @@ def attach_post_count():
         else:
             print(f"Skipped: {counter}/{len(waifus)}")
             counter += 1
+
+
+def attach_ranks():
+    waifus = Waifu.objects.all()
+    counter = 1
+    for waifu in waifus:
+        match waifu.post_count:
+            case num if num < 100:
+                waifu.rank = "🔯✡✡✡✡"
+                waifu.save()
+            case num if 100 <= num < 400:
+                waifu.rank = "🔯🔯✡✡✡"
+                waifu.save()
+            case num if 400 <= num < 2000:
+                waifu.rank = "🔯🔯🔯✡✡"
+                waifu.save()
+            case num if 2000 <= num < 7500:
+                waifu.rank = "🔯🔯🔯🔯✡"
+                waifu.save()
+            case num if num >= 7500:
+                waifu.rank = "🔯🔯🔯🔯🔯"
+                waifu.save()
+            case _:
+                pass
+        print(f"Processed: {counter}")
+        counter += 1
+
+
+def count_rarities():
+    waifus = Waifu.objects.all()
+    c = 0
+    u = 0
+    r = 0
+    sr = 0
+    ssr = 0
+    for waifu in waifus:
+        match waifu.rank:
+            case "🔯✡✡✡✡":
+                c += 1
+            case "🔯🔯✡✡✡":
+                u += 1
+            case "🔯🔯🔯✡✡":
+                r += 1
+            case "🔯🔯🔯🔯✡":
+                sr += 1
+            case "🔯🔯🔯🔯🔯":
+                ssr += 1
+    print(f"1: {c}\n2: {u}\n3: {r}\n4: {sr}\n5: {ssr}")
+    
+def count_by_post_amount(number: int):
+    print(len(Waifu.objects.filter(post_count__lt=number)))
+
+def trim_safe():
+    Waifu.objects.filter(best_safe_post_score__lt=1).delete()
+    Waifu.objects.filter(best_safe_post_score=None).delete()
+    
+def trim_unsafe():
+    Waifu.objects.filter(best_unsafe_post_score__lt=1).delete()
+    Waifu.objects.filter(best_unsafe_post_score=None).delete()
+
+mirgo = Waifu.objects.get(id=89655)
+mirgo.owner = User.objects.get(id=1)
+mirgo.save()

@@ -5,16 +5,17 @@ from discord import Embed
 
 
 class User(models.Model):
+    name = models.TextField()
     discord_id = models.IntegerField(unique=True)
     money = models.IntegerField(default=0)
 
 
 @sync_to_async
-def register_user(id: int) -> bool:
+def register_user(id: int, name: str) -> bool:
     if User.objects.filter(discord_id=id).exists():
         return False
     else:
-        User.objects.create(discord_id=id)
+        User.objects.create(discord_id=id, name=name)
         return True
 
 
@@ -43,8 +44,29 @@ class Waifu(models.Model):
     best_unsafe_post_id = models.IntegerField(null=True)
     best_unsafe_post_score = models.IntegerField(null=True)
     best_unsafe_post_image = models.TextField(null=True)
-    value = models.IntegerField(null=True)
+    rank = models.TextField(null=True)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
+
+
+@sync_to_async
+def get_waifu_owner(waifu: Waifu):
+    if waifu.owner_id != None:
+        owner = waifu.owner_id
+        return User.objects.get(id=owner)
+    else:
+        return None
+
+
+@sync_to_async
+def capture_waifu(waifu_id: int, user_discord_id):
+    if Waifu.objects.get(owner_id__discord_id=user_discord_id):
+        return False
+    else:
+        waifu = Waifu.objects.get(id=waifu_id)
+        user = User.objects.get(discord_id=user_discord_id)
+        waifu.owner = user
+        waifu.save()
+        return True
 
 
 @sync_to_async
@@ -158,14 +180,19 @@ def format_for_embed(string: str) -> str:
         return name
 
 
-async def construct_message(waifu: Waifu) -> Embed:
+async def create_waifu_embed(waifu: Waifu, owner: User) -> Embed:
     name = format_for_embed(waifu.name)
     source = format_for_embed(waifu.source.split(" ")[0])
     image = waifu.best_safe_post_image
+    rarity = waifu.rank
+    message = Embed(title=f"{name} (ID: {waifu.id})", description=f"{source}")
+    if owner == None:
+        pass
+    else:
+        message.add_field(name="Owner", value=owner.name)
     if image == None:
         image = waifu.best_unsafe_post_image
-    message = Embed(title=f"{name} (ID: {waifu.id})", description=f"{source}")
-    # message.add_field(name="Value", value=f"💎{value}", inline=False)
+    message.add_field(name="Rarity", value=rarity, inline=False)
     message.set_image(url=image)
     message.add_field(
         name="Report",
