@@ -70,9 +70,14 @@ BAD_TAGS = [
 # "tag_count_character":"1",
 
 
+def waifu_exists(line):
+    name = line["tag_string_character"].split(" ")[0]
+    return Waifu.objects.filter(name=name).exists()
+
+
 def update_scores(line):
     waifu_name = line["tag_string_character"].split(" ")[0]
-    new_score = line["score"]
+    new_score = int(line["score"])
     if waifu_name == "":
         return False
     else:
@@ -80,67 +85,70 @@ def update_scores(line):
             waifu = Waifu.objects.get(name=waifu_name)
             current_safe_score = waifu.best_safe_post_score
             current_unsafe_score = waifu.best_unsafe_post_score
-            if line["rating"] == "s":
+            if line["rating"] == "s" and new_score > 0:
                 waifu.best_safe_post_id = int(line["id"])
-                waifu.best_safe_post_score = int(line["score"])
-                waifu.best_safe_post_image = line["large_file_url"]
+                waifu.best_safe_post_score = new_score
+                waifu.best_safe_post_image = line["file_url"]
                 if current_safe_score == None:
-                    current_safe_score = int(new_score)
+                    current_safe_score = new_score
                     waifu.save()
-                    return True
                 else:
-                    if current_safe_score <= int(new_score):
-                        current_safe_score = int(new_score)
+                    if current_safe_score < new_score:
+                        current_safe_score = new_score
                         waifu.save()
-                        return True
-                    waifu.save()
-                    return True
-            else:
+            elif new_score > 0:
                 waifu.best_unsafe_post_id = int(line["id"])
-                waifu.best_unsafe_post_score = int(line["score"])
-                waifu.best_unsafe_post_image = line["large_file_url"]
+                waifu.best_unsafe_post_score = new_score
+                waifu.best_unsafe_post_image = line["file_url"]
                 if current_unsafe_score == None:
-                    current_unsafe_score = int(new_score)
+                    current_unsafe_score = new_score
                     waifu.save()
-                    return True
                 else:
-                    if current_unsafe_score <= int(new_score):
-                        current_unsafe_score = int(new_score)
+                    if current_unsafe_score < new_score:
+                        current_unsafe_score = new_score
                         waifu.save()
-                        return True
-                    waifu.save()
-                    return True
         except KeyError or AttributeError or ValueError:
             pass
+
+
+def check_tags(tags) -> bool:
+    counter = 0
+    for tag in tags:
+        if tag in BAD_TAGS:
+            counter += 1
+    if counter > 0:
+        return False
+    else:
+        return True
 
 
 def filter(line):
     tags = line["tag_string"].split(" ")
     source_count = int(line["tag_count_copyright"])
     character_count = int(line["tag_count_character"])
+    source = line["tag_string_copyright"]
     print(character_count)
     if character_count > 0:
         name = line["tag_string_character"].split(" ")[0]
-        if source_count > 0:
-            if source := line["tag_string_copyright"].split(" ")[0] == "original":
+        match source_count:
+            case 0:
+                print("Skipped: no source")
                 return False
-            else:
-                for tag in tags:
-                    if tag in BAD_TAGS:
-                        print("Skipped: bad tags")
+            case num if num in range(1, 3):
+                if not check_tags(tags):
+                    print("Skipped: bad tags")
+                    return False
+                elif ("solo" or "solo_focus") and "1girl" in tags:
+                    if r"_(cosplay)" in name:
+                        print("Skipped: cosplay")
                         return False
-                    if ("solo" or "solo_focus") and "1girl" in tags:
-                        print(name)
-                        if r"_(cosplay)" in name:
-                            print("Skipped: cosplay")
-                            return False
-                        return True
-                    else:
-                        return False
+                    return True
+                else:
+                    return False
+            case _:
+                print("Skipped: too many sources")
+                return False
 
-        else:
-            print("Skipped: no source")
-            return False
     else:
         print("Skipped: no characters")
         return False
@@ -149,35 +157,31 @@ def filter(line):
 def add_waifu(line):
     try:
         name = line["tag_string_character"].split(" ")[0]
-        if name:
-            sources = line["tag_string_copyright"]
-            if Waifu.objects.filter(name=name).exists():
-                pass
-            else:
-                if line["rating"] == "s":
-                    best_safe_post_id = int(line["id"])
-                    best_safe_post_score = int(line["score"])
-                    best_safe_post_image = line["large_file_url"]
-                    Waifu.objects.create(
-                        name=name,
-                        source=sources,
-                        best_safe_post_id=best_safe_post_id,
-                        best_safe_post_score=best_safe_post_score,
-                        best_safe_post_image=best_safe_post_image,
-                    )
-                    print(f"Added waifu: {name}")
-                else:
-                    best_unsafe_post_id = int(line["id"])
-                    best_unsafe_post_score = int(line["score"])
-                    best_unsafe_post_image = line["large_file_url"]
-                    Waifu.objects.create(
-                        name=name,
-                        source=sources,
-                        best_unsafe_post_id=best_unsafe_post_id,
-                        best_unsafe_post_score=best_unsafe_post_score,
-                        best_unsafe_post_image=best_unsafe_post_image,
-                    )
-                    print(f"Added waifu: {name}")
+        sources = line["tag_string_copyright"]
+        if line["rating"] == "s":
+            best_safe_post_id = int(line["id"])
+            best_safe_post_score = int(line["score"])
+            best_safe_post_image = line["large_file_url"]
+            Waifu.objects.create(
+                name=name,
+                source=sources,
+                best_safe_post_id=best_safe_post_id,
+                best_safe_post_score=best_safe_post_score,
+                best_safe_post_image=best_safe_post_image,
+            )
+            print(f"Added waifu: {name}")
+        else:
+            best_unsafe_post_id = int(line["id"])
+            best_unsafe_post_score = int(line["score"])
+            best_unsafe_post_image = line["large_file_url"]
+            Waifu.objects.create(
+                name=name,
+                source=sources,
+                best_unsafe_post_id=best_unsafe_post_id,
+                best_unsafe_post_score=best_unsafe_post_score,
+                best_unsafe_post_image=best_unsafe_post_image,
+            )
+            print(f"Added waifu: {name}")
     except KeyError or AttributeError or ValueError:
         print("Skipped: incomplete data")
 
@@ -198,11 +202,8 @@ def parse_tags(file):
                 counter += 1
 
 
-files = "posts/"
-
-
-def parse_posts(directory):
-    for root, dirs, files in os.walk(directory):
+def parse_posts():
+    for root, _, files in os.walk("posts/"):
         files.sort()
         for filename in files:
             file = os.path.join(root, filename)
@@ -214,9 +215,7 @@ def parse_posts(directory):
                         print(f"Processed {counter}/{len(data)} in {filename}")
                         counter += 1
                     else:
-                        if Waifu.objects.filter(
-                            name=line["tag_string_character"].split(" ")[0]
-                        ).exists():
+                        if waifu_exists(line):
                             update_scores(line)
                             print(f"Processed {counter}/{len(data)} in {filename}")
                             counter += 1
@@ -227,7 +226,7 @@ def parse_posts(directory):
 
 
 def trim():
-    Waifu.objects.filter(post_count__lt=10).delete()
+    Waifu.objects.all().delete()
 
 
 def attach_post_count():
@@ -240,7 +239,9 @@ def attach_post_count():
             waifu.save()
             print(f"Added score: {counter}/{len(waifus)}")
             counter += 1
-
         else:
             print(f"Skipped: {counter}/{len(waifus)}")
             counter += 1
+
+
+parse_posts()

@@ -4,6 +4,7 @@ posts/
 *.py[cod]
 *$py.class
 *.json
+*.sqlite-journal
 # C extensions
 *.so
 
