@@ -10,7 +10,7 @@ class User(models.Model):
 
 
 @sync_to_async
-def register_user(id):
+def register_user(id: int) -> bool:
     if User.objects.filter(discord_id=id).exists():
         return False
     else:
@@ -19,9 +19,13 @@ def register_user(id):
 
 
 @sync_to_async
-def delete_user_db(id):
-    user = User.objects.filter(discord_id=id)
-    user.delete()
+def delete_user_db(id: int) -> bool:
+    try:
+        user = User.objects.filter(discord_id=id)
+        user.delete()
+        return True
+    except:
+        return False
 
 
 class Character(models.Model):
@@ -44,18 +48,18 @@ class Waifu(models.Model):
 
 
 @sync_to_async
-def get_waifu_by_id(id):
+def get_waifu_by_id(id: int) -> Waifu:
     return Waifu.objects.get(id=id)
 
 
 @sync_to_async
-def get_random_waifu():
+def get_random_waifu() -> Waifu:
     waifu = sample(list(Waifu.objects.all()), 1)
-    return waifu[0].id
+    return Waifu.objects.get(id=waifu[0].id)
 
 
 @sync_to_async
-def delete_waifu_db(id):
+def delete_waifu_db(id: int) -> bool:
     waifu = Waifu.objects.get(id=id)
     if waifu.owner != None:
         waifu.owner.money += 500
@@ -74,7 +78,7 @@ class Report(models.Model):
 
 
 @sync_to_async
-def get_all_reports():
+def get_all_reports() -> list[Embed]:
     reports = Report.objects.filter(status="ACTIVE")
     embeds = []
     for report in reports:
@@ -87,11 +91,14 @@ def get_all_reports():
 
 
 @sync_to_async
-def accept_all_reports():
+def accept_all_reports() -> bool:
     reports = Report.objects.filter(status="ACTIVE")
-    for report in reports:
-        del_waifu_proxy(report.waifu.id)
-    return True
+    if reports.exists():
+        for report in reports:
+            del_waifu_proxy(report.waifu.id)
+        return True
+    else:
+        return
 
 
 @async_to_sync
@@ -100,22 +107,27 @@ async def del_waifu_proxy(waifu):
 
 
 @sync_to_async
-def accept_report(id: int):
+def accept_report(id: int) -> bool:
     report = Report.objects.get(id=id)
     if del_waifu_proxy(report.waifu.id):
         return True
+    else:
+        return False
 
 
 @sync_to_async
-def deny_report(id: int):
-    report = Report.objects.get(id=id)
-    report.status = "DENIED"
-    report.save()
-    return True
+def deny_report(id: int) -> bool:
+    if Report.objects.filter(id=id).exists():
+        report = Report.objects.get(id=id)
+        report.status = "DENIED"
+        report.save()
+        return True
+    else:
+        return False
 
 
 @sync_to_async
-def report_waifu(waifu: int, user: int, reason: str):
+def report_waifu(waifu: int, user: int, reason: str) -> str:
     if report := Report.objects.filter(waifu=waifu).exists():
         if report.status == "ACTIVE":
             return "DOUBLE"
@@ -132,7 +144,7 @@ def report_waifu(waifu: int, user: int, reason: str):
 # Utils
 
 
-def format_for_embed(string):
+def format_for_embed(string: str) -> str:
     if (r"_(") in string:
         name = string.split("_(")[0]
         name = name.split("_")
@@ -146,14 +158,13 @@ def format_for_embed(string):
         return name
 
 
-async def construct_message(id: int):
-    waifu_obj = await get_waifu_by_id(id)
-    name = format_for_embed(waifu_obj.name)
-    source = format_for_embed(waifu_obj.source.split(" ")[0])
-    image = waifu_obj.best_safe_post_image
+async def construct_message(waifu: Waifu) -> Embed:
+    name = format_for_embed(waifu.name)
+    source = format_for_embed(waifu.source.split(" ")[0])
+    image = waifu.best_safe_post_image
     if image == None:
-        image = waifu_obj.best_unsafe_post_image
-    message = Embed(title=f"{name} (ID: {waifu_obj.id})", description=f"{source}")
+        image = waifu.best_unsafe_post_image
+    message = Embed(title=f"{name} (ID: {waifu.id})", description=f"{source}")
     # message.add_field(name="Value", value=f"💎{value}", inline=False)
     message.set_image(url=image)
     message.add_field(

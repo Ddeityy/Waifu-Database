@@ -24,13 +24,14 @@ async def waifu(ctx):
 @bot.command()
 @commands.is_owner()
 async def waifuid(ctx, id: int):
-    embed = await construct_message(id)
+    waifu = get_waifu_by_id(id)
+    embed = await construct_message(waifu)
     await ctx.reply(embed=embed)
 
 
 @bot.command()
 @commands.is_owner()
-async def delete_waifu(ctx, id):
+async def delete_waifu(ctx, id: int):
     await ctx.reply(f"Confirm?")
     try:
         response = await bot.wait_for("message", timeout=30.0)
@@ -56,7 +57,7 @@ async def register(ctx):
 
 @bot.command()
 @commands.is_owner()
-async def delete_user(ctx, id):
+async def delete_user(ctx, id: int):
     await delete_user_db(id)
     await ctx.reply(f"User {ctx.author} successfully deleted")
 
