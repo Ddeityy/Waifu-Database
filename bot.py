@@ -3,27 +3,32 @@ import discord
 from discord.ext import commands
 from django import setup
 from discord.ext.commands.errors import NotOwner
+import asyncio
+import dotenv
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
 setup()
 from db.models import *
-import asyncio
-import dotenv
+
 
 dotenv.load_dotenv()
 TOKEN = os.getenv("TOKEN")
 bot = commands.Bot(command_prefix="$", intents=discord.Intents.all())
 
+
 # Waifu commands
-
-
 @bot.command()
-async def capture(ctx, waifu_id: int):
-    user_id = ctx.author.id
-    if await capture_waifu(waifu_id, user_id):
-        await ctx.reply(f"Waifu successfully captured!")
+async def release(ctx, *, waifu_id: int):
+    user = ctx.author.id
+    waifu = await get_waifu_by_id(waifu_id)
+    name = format_for_embed(waifu.name)
+    if waifu.owner_id != None:
+        if await release_waifu(waifu.id, user):
+            await ctx.reply(f"{name} released.")
+        else:
+            await ctx.reply(f"You do not own {name}.")
     else:
-        await ctx.reply("Waifu already has an owner.")
+        await ctx.reply(f"{name} has no owner.")
 
 
 @bot.command()
@@ -32,10 +37,30 @@ async def waifu(ctx):
     owner = await get_waifu_owner(waifu)
     embed = await create_waifu_embed(waifu, owner)
     await ctx.reply(embed=embed)
+    try:
+        response = await bot.wait_for(
+            "message", timeout=30.0, check=lambda x: ctx.author.id == x.author.id
+        )
+    except asyncio.TimeoutError:
+        return
+    print(response.content)
+    if response.content.lower() == "capture":
+        await attempt_capture(3, waifu, ctx, response)
+    if response.content.lower().split(" ")[0] == "report":
+        reason = " ".join(response.content.lower().split(" ")[1:])
+        match await report_waifu(waifu.id, ctx.author.id, reason):
+            case "SUCCESS":
+                await ctx.reply("Waifu reported.")
+            case "DOUBLE":
+                await ctx.reply("Waifu is already reported.")
+            case "DENIED":
+                await ctx.reply("Previous report alredy denied.")
+    else:
+        return
 
 
 @bot.command()
-# @commands.is_owner()
+@commands.is_owner()
 async def waifuid(ctx, id: int):
     waifu = await get_waifu_by_id(id)
     owner = await get_waifu_owner(waifu)
@@ -48,7 +73,9 @@ async def waifuid(ctx, id: int):
 async def delete_waifu(ctx, id: int):
     await ctx.reply(f"Confirm?")
     try:
-        response = await bot.wait_for("message", timeout=30.0)
+        response = await bot.wait_for(
+            "message", timeout=30.0, check=lambda x: ctx.author.id == x.author.id
+        )
     except asyncio.TimeoutError:
         return
 
@@ -61,11 +88,43 @@ async def delete_waifu(ctx, id: int):
 
 # User commands
 @bot.command()
+async def harem(ctx):
+    id = ctx.author.id
+    if await check_harem(id):
+        waifus = await get_harem(id)
+        for waifu in waifus:
+            await ctx.reply(embed=waifu)
+    else:
+        await ctx.reply("No bitches?")
+
+
+@bot.command()
+async def reset(ctx):
+    id = ctx.author.id
+    name = ctx.author
+    await ctx.reply("Are you sure?")
+    try:
+        response = await bot.wait_for(
+            "message", timeout=30.0, check=lambda x: ctx.author.id == x.author.id
+        )
+    except asyncio.TimeoutError:
+        return
+
+    if response.content.lower() == "yes" and response.author == ctx.author:
+        if await reset_user(id, name):
+            await ctx.reply("User succesfully reset.")
+        else:
+            await ctx.reply("User not found.")
+    else:
+        return
+
+
+@bot.command()
 async def register(ctx):
     user = ctx.author.id
     username = ctx.author
     if await register_user(user, username):
-        await ctx.reply(f"Registration complete")
+        await ctx.reply(f"Registration complete.")
     else:
         await ctx.reply(f"You're already registered.")
 
@@ -93,29 +152,6 @@ async def reports(ctx):
             await ctx.reply("No reports.")
     except NotOwner:
         await ctx.reply("No :)")
-
-
-@bot.command()
-async def report(
-    ctx,
-    waifu_id: int = 0,
-    *,
-    reason: str = "None",
-):
-    if id == 0:
-        await ctx.reply("Please include waifu ID.")
-        return
-    if reason == "None":
-        await ctx.reply("Please include a reason.")
-        return
-    user = ctx.author.id
-    match await report_waifu(waifu_id, user, reason):
-        case "SUCCESS":
-            await ctx.reply("Waifu reported.")
-        case "DOUBLE":
-            await ctx.reply("Waifu already reported.")
-        case "DENIED":
-            await ctx.reply("Report on this waifu has already been denied.")
 
 
 @bot.command()
@@ -148,6 +184,34 @@ async def deny(ctx, id: int):
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
+
+
+async def attempt_capture(tries, waifu, ctx, response):
+    if tries > 0:
+        if await roll(waifu.rank):
+            if await capture_waifu(waifu.id, ctx.author.id):
+                name = format_for_embed(waifu.name)
+                await ctx.reply(f"Captured {name}.")
+            else:
+                await ctx.reply(f"{name} already has an owner")
+        else:
+            tries -= 1
+            if tries == 0:
+                await ctx.reply("Capture failed.\nGood luck next time!")
+                return
+            await ctx.reply(f"Capture failed.\nAttempts left: {tries}")
+            try:
+                new_response = await bot.wait_for(
+                    "message",
+                    timeout=30.0,
+                    check=lambda x: ctx.author.id == x.author.id,
+                )
+                if new_response.content:
+                    await attempt_capture(tries, waifu, ctx, response)
+            except asyncio.TimeoutError:
+                pass
+    else:
+        return
 
 
 bot.run(TOKEN)

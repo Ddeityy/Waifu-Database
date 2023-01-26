@@ -2,12 +2,46 @@ from django.db import models
 from random import sample
 from asgiref.sync import sync_to_async, async_to_sync
 from discord import Embed
+from random import randint
 
 
 class User(models.Model):
     name = models.TextField()
     discord_id = models.IntegerField(unique=True)
     money = models.IntegerField(default=0)
+
+
+@sync_to_async
+def check_harem(discord_id: int) -> bool:
+    if Waifu.objects.filter(owner_id__discord_id=discord_id).exists():
+        return True
+    else:
+        return False
+
+
+@sync_to_async
+def get_harem(discord_id: int) -> list[Embed]:
+    waifus = Waifu.objects.filter(owner_id__discord_id=discord_id).order_by(
+        "-post_count"
+    )
+    embeds = []
+    for waifu in waifus:
+        name = format_for_embed(waifu.name)
+        source = format_for_embed(waifu.source)
+        embed = Embed(title=f"{name} (ID: {waifu.id})", description=source)
+        embed.add_field(name="Owner:", value=waifu.owner.name)
+        embed.add_field(name="Rarity", value=waifu.rank)
+        embed.set_image(url=waifu.best_unsafe_post_image)
+        embeds.append(embed)
+    return embeds
+
+
+async def reset_user(discord_id: int, name: str):
+    if await delete_user_db(discord_id):
+        await register_user(id=discord_id, name=name)
+        return True
+    else:
+        return False
 
 
 @sync_to_async
@@ -49,7 +83,18 @@ class Waifu(models.Model):
 
 
 @sync_to_async
-def get_waifu_owner(waifu: Waifu):
+def release_waifu(waifu_id: int, owner_id: int):
+    waifu = Waifu.objects.get(id=waifu_id)
+    if waifu.owner == User.objects.get(discord_id=owner_id):
+        waifu.owner = None
+        waifu.save()
+        return True
+    else:
+        return False
+
+
+@sync_to_async
+def get_waifu_owner(waifu: Waifu) -> Waifu or None:
     if waifu.owner_id != None:
         owner = waifu.owner_id
         return User.objects.get(id=owner)
@@ -58,7 +103,7 @@ def get_waifu_owner(waifu: Waifu):
 
 
 @sync_to_async
-def capture_waifu(waifu_id: int, user_discord_id: int):
+def capture_waifu(waifu_id: int, user_discord_id: int) -> bool:
     if Waifu.objects.filter(owner_id__discord_id=user_discord_id, id=waifu_id).exists():
         return False
     else:
@@ -76,7 +121,7 @@ def get_waifu_by_id(id: int) -> Waifu:
 
 @sync_to_async
 def get_random_waifu() -> Waifu:
-    waifu = sample(list(Waifu.objects.all()), 1)
+    waifu = sample(list(Waifu.objects.filter(owner_id=None)), 1)
     return Waifu.objects.get(id=waifu[0].id)
 
 
@@ -164,8 +209,6 @@ def report_waifu(waifu: int, user: int, reason: str) -> str:
 
 
 # Utils
-
-
 def format_for_embed(string: str) -> str:
     if (r"_(") in string:
         name = string.split("_(")[0]
@@ -178,6 +221,36 @@ def format_for_embed(string: str) -> str:
         name = [word.capitalize() for word in name]
         name = " ".join(name)
         return name
+
+
+async def roll(rarity: str) -> bool:
+    roll = randint(0, 100)
+    match rarity:
+        case "🔯✡✡✡✡":
+            if roll <= 70:
+                return True
+            else:
+                return False
+        case "🔯🔯✡✡✡":
+            if roll <= 50:
+                return True
+            else:
+                return False
+        case "🔯🔯🔯✡✡":
+            if roll <= 30:
+                return True
+            else:
+                return False
+        case "🔯🔯🔯🔯✡":
+            if roll <= 20:
+                return True
+            else:
+                return False
+        case "🔯🔯🔯🔯🔯":
+            if roll <= 10:
+                return True
+            else:
+                return False
 
 
 async def create_waifu_embed(waifu: Waifu, owner: User) -> Embed:
