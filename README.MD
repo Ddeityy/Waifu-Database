@@ -6,6 +6,7 @@ Based on the database dump by Gwern on https://gwern.net/Danbooru2021/
 
 - Change backend to Pycord
 - Change capture & report to buttons
+- Convert \$ to / commands
 - User registration on \$waifu
 - Add "pokeballs"
 - Add roll restrictions & currency
