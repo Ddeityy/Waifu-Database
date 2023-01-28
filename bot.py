@@ -188,7 +188,7 @@ async def on_ready():
 
 async def attempt_capture(tries, waifu, ctx, response):
     if tries > 0:
-        if await roll(waifu.rank):
+        if await roll(waifu.rarity):
             if await capture_waifu(waifu.id, ctx.author.id):
                 name = format_for_embed(waifu.name)
                 await ctx.reply(f"Captured {name}.")

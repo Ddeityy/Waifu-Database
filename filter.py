@@ -1,64 +1,12 @@
 from django import setup
 import json
 import os
+from tags import BAD_TAGS
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "filter_settings")
 setup()
 from db.models import *
 
-BAD_TAGS = [
-    "2girls",
-    "3girls",
-    "4girls",
-    "5girls",
-    "6+girls",
-    "1boy",
-    "2boys",
-    "3boys",
-    "4boys",
-    "5boys",
-    "6+boys",
-    "futanari",
-    "multiple_girls",
-    "multiple_others",
-    "multiple_boys",
-    "androgynous",
-    "body_switch",
-    "personality_switch",
-    "everyone",
-    "multiple_views",
-    "guro",
-    "scat",
-    "pee",
-    "baby",
-    "tentacles",
-    "bestiality",
-    "animal_focus",
-    "injection",
-    "blood",
-    "parody",
-    "unfinished_art",
-    "unfinished",
-    "sketch",
-    "4koma",
-    "comic",
-    "text_focus",
-    "animated",
-    "animated_png",
-    "hybrid_animation",
-    "non-repeating_animation",
-    "easytoon",
-    "looping_animation",
-    "flash",
-    "ugoira",
-    "video",
-    "live2d",
-    "original",
-    "genderswap",
-    "cosplay",
-    "sample_watermark",
-    "stuffed_toy",
-]
 
 # "tag_string_general":"1boy black_hair chocolate male_focus red_eyes shirt solo striped striped_shirt",
 # "tag_string":"1boy black_hair chocolate ikari_shinji male_focus neon_genesis_evangelion red_eyes shirt solo striped striped_shirt",
@@ -130,9 +78,8 @@ def filter(line):
     tags = line["tag_string"].split(" ")
     source_count = int(line["tag_count_copyright"])
     character_count = int(line["tag_count_character"])
-    source = line["tag_string_copyright"]
     print(character_count)
-    if character_count > 0:
+    if character_count == 1 or 2:
         name = line["tag_string_character"].split(" ")[0]
         match source_count:
             case 0:
@@ -154,7 +101,7 @@ def filter(line):
                 return False
 
     else:
-        print("Skipped: no characters")
+        print("Skipped: too little/many characters")
         return False
 
 
@@ -190,8 +137,8 @@ def add_waifu(line):
         print("Skipped: incomplete data")
 
 
-def parse_tags(file):
-    with open(file, "r", encoding="utf-8") as f:
+def parse_tags():
+    with open("tags000000000000.json", "r", encoding="utf-8") as f:
         counter = 1
         data = [json.loads(line) for line in f]
         for line in data:
@@ -252,25 +199,25 @@ def attach_post_count():
             counter += 1
 
 
-def attach_ranks():
+def attach_rarities():
     waifus = Waifu.objects.all()
     counter = 1
     for waifu in waifus:
         match waifu.post_count:
             case num if num < 100:
-                waifu.rank = "🔯✡✡✡✡"
+                waifu.rarity = "🔯✡✡✡✡"
                 waifu.save()
             case num if 100 <= num < 400:
-                waifu.rank = "🔯🔯✡✡✡"
+                waifu.rarity = "🔯🔯✡✡✡"
                 waifu.save()
             case num if 400 <= num < 2000:
-                waifu.rank = "🔯🔯🔯✡✡"
+                waifu.rarity = "🔯🔯🔯✡✡"
                 waifu.save()
             case num if 2000 <= num < 7500:
-                waifu.rank = "🔯🔯🔯🔯✡"
+                waifu.rarity = "🔯🔯🔯🔯✡"
                 waifu.save()
             case num if num >= 7500:
-                waifu.rank = "🔯🔯🔯🔯🔯"
+                waifu.rarity = "🔯🔯🔯🔯🔯"
                 waifu.save()
             case _:
                 pass
@@ -286,7 +233,7 @@ def count_rarities():
     sr = 0
     ssr = 0
     for waifu in waifus:
-        match waifu.rank:
+        match waifu.rarity:
             case "🔯✡✡✡✡":
                 c += 1
             case "🔯🔯✡✡✡":
@@ -298,18 +245,27 @@ def count_rarities():
             case "🔯🔯🔯🔯🔯":
                 ssr += 1
     print(f"1: {c}\n2: {u}\n3: {r}\n4: {sr}\n5: {ssr}")
-    
+
+
 def count_by_post_amount(number: int):
     print(len(Waifu.objects.filter(post_count__lt=number)))
+
 
 def trim_safe():
     Waifu.objects.filter(best_safe_post_score__lt=1).delete()
     Waifu.objects.filter(best_safe_post_score=None).delete()
-    
+
+
 def trim_unsafe():
     Waifu.objects.filter(best_unsafe_post_score__lt=1).delete()
     Waifu.objects.filter(best_unsafe_post_score=None).delete()
 
-mirgo = Waifu.objects.get(id=89655)
-mirgo.owner = User.objects.get(id=1)
-mirgo.save()
+
+parse_posts()
+parse_tags()
+attach_post_count()
+trim(20)
+trim_safe()
+trim_unsafe()
+attach_rarities()
+count_rarities()

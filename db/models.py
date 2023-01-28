@@ -8,7 +8,6 @@ from random import randint
 class User(models.Model):
     name = models.TextField()
     discord_id = models.IntegerField(unique=True)
-    money = models.IntegerField(default=0)
 
 
 @sync_to_async
@@ -78,7 +77,7 @@ class Waifu(models.Model):
     best_unsafe_post_id = models.IntegerField(null=True)
     best_unsafe_post_score = models.IntegerField(null=True)
     best_unsafe_post_image = models.TextField(null=True)
-    rank = models.TextField(null=True)
+    rarity = models.TextField(null=True)
     owner = models.ForeignKey(User, null=True, on_delete=models.SET_NULL)
 
 
@@ -128,19 +127,15 @@ def get_random_waifu() -> Waifu:
 @sync_to_async
 def delete_waifu_db(id: int) -> bool:
     waifu = Waifu.objects.get(id=id)
-    if waifu.owner != None:
-        waifu.owner.money += 500
-        waifu.delete()
+    if waifu.delete():
         return True
     else:
-        waifu.delete()
-        return True
+        return False
 
 
 class Report(models.Model):
     waifu = models.ForeignKey(Waifu, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    reason = models.TextField()
     status = models.TextField()
 
 
