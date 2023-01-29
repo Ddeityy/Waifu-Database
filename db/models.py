@@ -29,7 +29,7 @@ def get_harem(discord_id: int) -> list[Embed]:
         source = format_for_embed(waifu.source)
         embed = Embed(title=f"{name} (ID: {waifu.id})", description=source)
         embed.add_field(name="Owner:", value=waifu.owner.name)
-        embed.add_field(name="Rarity", value=waifu.rank)
+        embed.add_field(name="Rarity", value=waifu.rarity)
         embed.set_image(url=waifu.best_unsafe_post_image)
         embeds.append(embed)
     return embeds
@@ -146,7 +146,7 @@ def get_all_reports() -> list[Embed]:
     for report in reports:
         embed = Embed(title="Reports:")
         name = format_for_embed(report.waifu.name)
-        embed.add_field(name=f"{name} ID:{report.id}", value=f"{report.reason}")
+        embed.add_field(name=f"{name}", value=f"ID:{report.id}")
         embed.set_image(url=report.waifu.best_safe_post_image)
         embeds.append(embed)
     return embeds
@@ -189,7 +189,7 @@ def deny_report(id: int) -> bool:
 
 
 @sync_to_async
-def report_waifu(waifu: int, user: int, reason: str) -> str:
+def report_waifu(waifu: int, user: int) -> str:
     if report := Report.objects.filter(waifu=waifu).exists():
         if report.status == "ACTIVE":
             return "DOUBLE"
@@ -198,8 +198,7 @@ def report_waifu(waifu: int, user: int, reason: str) -> str:
     else:
         u = User.objects.get(discord_id=user)
         w = Waifu.objects.get(id=waifu)
-        r = reason
-        Report.objects.create(waifu=w, user=u, reason=r, status="ACTIVE")
+        Report.objects.create(waifu=w, user=u, status="ACTIVE")
         return "SUCCESS"
 
 
@@ -252,7 +251,7 @@ async def create_waifu_embed(waifu: Waifu, owner: User) -> Embed:
     name = format_for_embed(waifu.name)
     source = format_for_embed(waifu.source.split(" ")[0])
     image = waifu.best_safe_post_image
-    rarity = waifu.rank
+    rarity = waifu.rarity
     message = Embed(title=f"{name} (ID: {waifu.id})", description=f"{source}")
     if owner == None:
         pass
@@ -264,7 +263,7 @@ async def create_waifu_embed(waifu: Waifu, owner: User) -> Embed:
     message.set_image(url=image)
     message.add_field(
         name="Report",
-        value="If this doesn't qualify as waifu,\nPlease send a '$report <ID> <reason>'",
+        value="If this doesn't qualify as a waifu (wrong character, male character etc.)\nPlease press the report button.",
     )
 
     return message
