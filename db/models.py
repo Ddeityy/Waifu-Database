@@ -11,6 +11,12 @@ class User(models.Model):
 
 
 @sync_to_async
+def nuke_all_users():
+    users = User.objects.all()
+    users.delete()
+
+
+@sync_to_async
 def check_harem(discord_id: int) -> bool:
     if Waifu.objects.filter(owner_id__discord_id=discord_id).exists():
         return True
@@ -55,7 +61,7 @@ def register_user(id: int, name: str) -> bool:
 @sync_to_async
 def delete_user_db(id: int) -> bool:
     try:
-        user = User.objects.filter(discord_id=id)
+        user = User.objects.get(discord_id=id)
         user.delete()
         return True
     except:

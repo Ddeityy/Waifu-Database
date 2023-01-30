@@ -11,11 +11,13 @@ class WaifuCog(commands.Cog):
         self.bot = bot
 
     @commands.slash_command()
+    @commands.cooldown(1, 15, commands.BucketType.user)
     async def waifu(self, ctx):
         waifu = await get_random_waifu()
         owner = await get_waifu_owner(waifu)
         embed = await create_waifu_embed(waifu, owner)
         capture_button = CaptureView(3, waifu, ctx.author)
+        print(ctx.author.id)
         if await register_user(ctx.author.id, ctx.author):
             await ctx.respond(embed=embed, view=capture_button)
         else:

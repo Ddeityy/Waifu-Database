@@ -28,6 +28,11 @@ class UserCog(commands.Cog):
 
     @commands.slash_command()
     @commands.is_owner()
+    async def nuke_all(self, ctx):
+        await nuke_all_users()
+
+    @commands.slash_command()
+    @commands.is_owner()
     async def delete_user(self, ctx, id: str):
         await delete_user_db(int(id))
         await ctx.respond(f"User successfully deleted.")
