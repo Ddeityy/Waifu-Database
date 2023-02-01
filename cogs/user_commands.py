@@ -18,7 +18,7 @@ class UserCog(commands.Cog):
             for waifu in waifus:
                 await ctx.respond(embed=waifu)
         else:
-            await ctx.respond("No bitches?")
+            await ctx.respond("https://media.discordapp.net/attachments/1066292810917089370/1069701070890213407/image.png")
 
     @commands.slash_command()
     async def reset(self, ctx):
