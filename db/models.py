@@ -29,7 +29,7 @@ def get_harem(discord_id: int) -> list[Embed]:
     waifus = Waifu.objects.filter(owner_id__discord_id=discord_id).order_by(
         "-post_count"
     )
-    embeds = []
+    embeds = {}
     for waifu in waifus:
         name = format_for_embed(waifu.name)
         source = format_for_embed(waifu.source)
@@ -37,7 +37,7 @@ def get_harem(discord_id: int) -> list[Embed]:
         embed.add_field(name="Owner:", value=waifu.owner.name)
         embed.add_field(name="Rarity", value=waifu.rarity)
         embed.set_image(url=waifu.best_unsafe_post_image)
-        embeds.append(embed)
+        embeds[waifu.id] = embed
     return embeds
 
 

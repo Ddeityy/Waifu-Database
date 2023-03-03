@@ -55,6 +55,31 @@ class CaptureView(discord.ui.View):
                 button.disabled = True
                 await interaction.response.edit_message(view=self)
 
+class HaremView(discord.ui.View):
+    def __init__(self, waifu, user):
+        super().__init__()
+        self.waifu = waifu
+        self.user = user
+        
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return interaction.user.id == self.user
+    
+    @discord.ui.button(label="Release", style=discord.ButtonStyle.red)
+    async def release(self, _, interaction):
+        user = self.user
+        waifu = await get_waifu_by_id(self.waifu)
+        name = format_for_embed(waifu.name)
+        if waifu.owner_id != None:
+            if await release_waifu(waifu.id, user):
+                await interaction.response.edit_message(view=None)
+                await interaction.followup.send(f"{name} released.")
+            else:
+                await interaction.response.edit_message(view=None)
+                await interaction.followup.send(f"You do not own {name}.")
+        else:
+            await interaction.response.edit_message(view=None)
+            await interaction.followup.send(f"{name} has no owner.")
+
 
 class ResetView(discord.ui.View):
     def __init__(self, user: discord.User):

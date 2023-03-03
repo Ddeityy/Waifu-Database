@@ -23,19 +23,8 @@ class WaifuCog(commands.Cog):
         else:
             await ctx.respond(embed=embed, view=capture_button)
 
-    @commands.slash_command(description="Releases a captured waifu by waifu ID.")
-    async def release(self, ctx, *, waifu_id: int):
-        user = ctx.author.id
-        waifu = await get_waifu_by_id(waifu_id)
-        name = format_for_embed(waifu.name)
-        if waifu.owner_id != None:
-            if await release_waifu(waifu.id, user):
-                await ctx.respond(f"{name} released.")
-            else:
-                await ctx.respond(f"You do not own {name}.")
-        else:
-            await ctx.respond(f"{name} has no owner.")
-
+    #@commands.slash_command(description="Releases a captured waifu by waifu ID.")
+    
     @commands.slash_command()
     @commands.is_owner()
     async def waifuid(self, ctx, id: int):

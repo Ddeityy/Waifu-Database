@@ -12,11 +12,11 @@ class UserCog(commands.Cog):
 
     @commands.slash_command()
     async def harem(self, ctx):
-        id = ctx.author.id
-        if await check_harem(id):
-            waifus = await get_harem(id)
+        user = ctx.author.id
+        if await check_harem(user):
+            waifus = await get_harem(user)
             for waifu in waifus:
-                await ctx.respond(embed=waifu)
+                await ctx.respond(embed=waifus[waifu], view=HaremView(waifu, user))
         else:
             await ctx.respond("https://media.discordapp.net/attachments/1066292810917089370/1069701070890213407/image.png")
 
